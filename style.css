@@ -1,0 +1,44 @@
+/* Import Google font for a clean, modern look */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+/* General Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #f4f4f9;  /* Light grayish background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #333;  /* Dark gray text color */
+}
+
+/* Container Styling */
+.container {
+    text-align: center;
+    background-color: #ffffff;  /* White background for the container */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Soft shadow for depth */
+}
+
+/* Heading Style */
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #0d6efd;  /* Soft blue color for heading */
+    margin-bottom: 20px;
+}
+
+/* Image Styling */
+.main-image {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);  /* Subtle shadow on the image */
+}
