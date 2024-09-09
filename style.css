@@ -10,7 +10,7 @@
 
 body {
     font-family: 'Montserrat', sans-serif;
-    background-color: #f4f4f9;  /* Light grayish background */
+    background-color: #0d1b2a;  /* Light grayish background */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -21,7 +21,7 @@ body {
 /* Container Styling */
 .container {
     text-align: center;
-    background-color: #ffffff;  /* White background for the container */
+    background-color: #1b263b;  /* White background for the container */
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Soft shadow for depth */
@@ -31,7 +31,7 @@ body {
 h1 {
     font-size: 3rem;
     font-weight: 700;
-    color: #0d6efd;  /* Soft blue color for heading */
+    color: #e0e1dd;  /* Soft blue color for heading */
     margin-bottom: 20px;
 }
 
