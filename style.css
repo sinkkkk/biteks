@@ -8,30 +8,89 @@
     box-sizing: border-box;
 }
 
+.shrikhand-regular {
+    font-family: "Shrikhand", serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 3rem;
+}
+
+.shrikhand-regular2 {
+    font-family: "Shrikhand", serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: 1rem;
+}
+
 body {
     font-family: 'Montserrat', sans-serif;
-    background-color: #0d1b2a;  /* Light grayish background */
+    background-color: #1c1c1c;
+    color: #c7f9cc;
+}
+
+/* Navigation Bar Styles */
+.navbar {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    height: 100vh;
-    color: #333;  /* Dark gray text color */
+    padding: 15px 30px;
+    background-color: #1c1c1c;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 10;
+}
+
+.logo {
+    font-family: 'Times New Roman', serif;  /* You can change this font to mimic your reference */
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #52b788;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+}
+
+.nav-links li {
+    margin-left: 30px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #52b788;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #f6c90e;  /* Add a hover effect to the links */
 }
 
 /* Container Styling */
 .container {
     text-align: center;
-    background-color: #1b263b;  /* White background for the container */
+    background-color: #252525;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);  /* Soft shadow for depth */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 100px;  /* To prevent overlap with the navbar */
 }
 
 /* Heading Style */
 h1 {
     font-size: 3rem;
     font-weight: 700;
-    color: #e0e1dd;  /* Soft blue color for heading */
+    color: #74c69d;
+    margin-bottom: 10px;
+}
+
+.container h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #74c69d;
     margin-bottom: 10px;
 }
 
@@ -40,5 +99,5 @@ h1 {
     width: 100%;
     max-width: 400px;
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);  /* Subtle shadow on the image */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
