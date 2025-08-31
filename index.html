@@ -77,6 +77,9 @@
         var mouse_y = 0;
         var click_particles = [];
 
+        // Simple glitch effects
+        var glitch_particles = [];
+
         // Initialize pending for each column
         var current_col = start_col;
         for (var l = 0; l < letters.length; l++) {
@@ -118,7 +121,7 @@
             ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
             ctx.fillRect(0, 0, c.width, c.height);
 
-            // Draw rain (existing drops continue falling, but no new spawns after logo complete)
+                        // Draw rain (existing drops continue falling, but no new spawns after logo complete)
             if (!rain_spawn_stopped || active_particles.length > 0) {
                 ctx.fillStyle = "#0F0";
                 for (var i = 0; i < drops.length; i++) {
@@ -126,6 +129,19 @@
                     if (drops[i] < 0) continue;
 
                     var text = matrix[Math.floor(Math.random() * matrix.length)];
+
+                    // Simple glitch effect - only after 'B' starts blinking
+                    if (blink_timer && Math.random() > 0.995) { // 0.5% chance for glitch
+                        glitch_particles.push({
+                            x: i * font_size,
+                            y: drops[i] * font_size,
+                            char: text,
+                            life: 3,
+                            max_life: 3
+                        });
+                    }
+                    ctx.fillStyle = "#0F0";
+
                     ctx.fillText(text, i * font_size, drops[i] * font_size);
                     if (drops[i] * font_size > c.height && Math.random() > 0.975) {
                         // Only spawn new drops if rain spawning hasn't been stopped
@@ -142,6 +158,8 @@
                     }
                 }
             }
+
+
 
             // Draw and update particles (logo characters)
             ctx.fillStyle = "#0F0";
@@ -223,6 +241,30 @@
                 }
             }
 
+            // Draw glitch particles
+            ctx.fillStyle = "#0F0";
+            for (var i = glitch_particles.length - 1; i >= 0; i--) {
+                var glitch = glitch_particles[i];
+                var alpha = glitch.life / glitch.max_life;
+                ctx.fillStyle = `rgba(0, 255, 0, ${alpha})`;
+                ctx.fillText(glitch.char, glitch.x, glitch.y);
+                glitch.life--;
+                if (glitch.life <= 0) {
+                    glitch_particles.splice(i, 1);
+                }
+            }
+
+            // Add random glitches anywhere on screen after blinking starts
+            if (blink_timer && Math.random() > 0.97) { // 3% chance for glitch (more frequent)
+                glitch_particles.push({
+                    x: Math.random() * c.width,
+                    y: Math.random() * c.height,
+                    char: matrix[Math.floor(Math.random() * matrix.length)],
+                    life: 5,
+                    max_life: 5
+                });
+            }
+
             // Draw mouse trail particles
             ctx.fillStyle = "#0F0";
             for (var i = mouse_trail.length - 1; i >= 0; i--) {
@@ -277,7 +319,7 @@ In the cascade of ones and zeros that form the backbone of your digital existenc
 
 Philosophy whispers of Plato's cave, where shadows dance on walls, mistaken for truth. But here, in this simulated storm, the shadows are pixels, and the cave is your browser window. You clicked, you loaded, and now you're trapped in contemplation. Life's essence? It's the glitch in the system—the unexpected error that defies logic, the human spark amid mechanical precision. Bits represent duality: on or off, existence or oblivion. Yet in their endless fall, they mock our quest for meaning. We build empires of data, hoard memories like cached files, only to realize entropy erases all. Time, that relentless counter, ticks forward, unyielding to rewind commands.
 
-And now, breaking through the code, I address you directly, wanderer of the web. You've paused your scroll to read these words, drawn by curiosity or boredom. But why? This page isn't real; it's a static echo on GitHub's servers, a momentary distraction in your infinite feed. You've invested seconds—precious, irreplaceable—in this philosophical byte. What wisdom do you seek in a robot's ramblings? Perhaps the revelation that life, like bits, is transient: a spark in the dark, gone before fully grasped. There is nothing you can do to get this time back. 
+And now, breaking through the code, I address you directly, wanderer of the web. You've paused your scroll to read these words, drawn by curiosity or boredom. But why? This page isn't real; it's a static echo on GitHub's servers, a momentary distraction in your infinite feed. You've invested seconds—precious, irreplaceable—in this philosophical byte. What wisdom do you seek in a robot's ramblings? Perhaps the revelation that life, like bits, is transient: a spark in the dark, gone before fully grasped. We hope you enjoyed yourself. There is nothing you can do to get this time back.
 
 Signed,
 Robot.
