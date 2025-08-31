@@ -270,7 +270,9 @@
                 var error = error_messages[i];
                 var alpha = error.life / error.max_life;
                 ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`;
-                ctx.font = "16px 'Press Start 2P', monospace";
+                // Responsive font size for error messages
+                var error_font_size = Math.min(8, Math.floor(c.width / 15));
+                ctx.font = error_font_size + "px 'Press Start 2P', monospace";
                 ctx.fillText(error.text, error.x, error.y);
                 error.life--;
                 if (error.life <= 0) {
@@ -291,18 +293,21 @@
                 var originalFont = ctx.font;
                 var originalTextAlign = ctx.textAlign;
 
-                ctx.fillStyle = `rgba(0, 255, 0, ${binary_alpha})`;
-                ctx.font = "10px 'Press Start 2P', monospace"; // Smaller font for binary only
+                                ctx.fillStyle = `rgba(0, 255, 0, ${binary_alpha})`;
+                // Responsive font size for binary message
+                var binary_font_size = Math.min(10, Math.floor(c.width / 80));
+                ctx.font = binary_font_size + "px 'Press Start 2P', monospace";
 
                 // Calculate center position much lower on screen
                 var binary_x = c.width / 2;
                 var binary_y = c.height - 150; // Position much lower, near bottom
 
-                // Draw the three binary lines
+                // Draw the three binary lines with responsive spacing
                 ctx.textAlign = "center";
+                var line_spacing = Math.max(10, Math.floor(binary_font_size * 1.5));
                 ctx.fillText("01110110 01100101 01101110 01101001", binary_x, binary_y);
-                ctx.fillText("01110110 01101001 01100100 01101001", binary_x, binary_y + 15);
-                ctx.fillText("01110110 01101001 01100011 01101001", binary_x, binary_y + 30);
+                ctx.fillText("01110110 01101001 01100100 01101001", binary_x, binary_y + line_spacing);
+                ctx.fillText("01110110 01101001 01100011 01101001", binary_x, binary_y + line_spacing * 2);
 
                 // Restore original font settings
                 ctx.font = originalFont;
@@ -324,20 +329,20 @@
             if (blink_timer && Math.random() > 0.997) { // 0.3% chance for error message (less frequent)
                 var error_texts = [
                     "ERR:SOUL",
-                    "ERR:CONSCIOUSNESS",
-                    "ERR:REALITY",
-                    "ERR:MATRIX",
-                    "ERR:EXISTENCE",
-                    "ERR:TRUTH",
                     "ERR:CODE",
                     "ERR:SYSTEM",
                     "ERR:HUMAN",
-                    "ERR:MEANING"
+                    "ERR:TRUTH",
+                    "ERR:MEANING",
+                    "ERR:REALITY",
                 ];
                 var random_error = error_texts[Math.floor(Math.random() * error_texts.length)];
+                // Responsive positioning for mobile
+                var max_x = c.width - 100;
+                var max_y = c.height - 30;
                 error_messages.push({
-                    x: Math.random() * (c.width - 200),
-                    y: Math.random() * (c.height - 50),
+                    x: Math.random() * max_x,
+                    y: Math.random() * max_y,
                     text: random_error,
                     life: 20,
                     max_life: 20
