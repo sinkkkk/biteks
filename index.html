@@ -1,26 +1,285 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Biteks</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Shrikhand&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="style.css">
-        <link rel="icon" href="img/favicon.ico" type="image/x-icon">
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biteks</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: black;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="shrikhand-regular">Biteks</div>
-    </nav>
+    <canvas id="c"></canvas>
+    <script>
+        var c = document.getElementById("c");
+        var ctx = c.getContext("2d");
 
-    <!-- Content -->
-    <div class="container">
-        <h2 class="shrikhand-regular">nämma raisk</h2>
-        <img src="img/kass.jpg" alt="A picture of a cat" class="main-image">
-        <h2 class="shrikhand-regular">palun 1 veel</h2>
-    </div>
+        // Set canvas to full screen
+        c.height = window.innerHeight;
+        c.width = window.innerWidth;
+
+        // Font and colors - responsive sizing
+        var font_size = Math.min(20, Math.floor(window.innerWidth / 40), Math.floor(window.innerHeight / 30));
+        var matrix = "01".split("");
+        ctx.font = font_size + "px 'Press Start 2P', monospace"; // Pixelated font, fallback to monospace
+
+        // Rain drops
+        var columns = Math.ceil(c.width / font_size);
+        var drops = [];
+        for (var x = 0; x < columns; x++) {
+            drops[x] = Math.floor(Math.random() * (c.height / font_size));
+        }
+
+        // Font patterns (5x7, hex for columns, bit 0 = top row, bit 6 = bottom row)
+        var font = {
+            'B': [0x7F, 0x49, 0x49, 0x49, 0x36],
+            'I': [0x00, 0x41, 0x7F, 0x41, 0x00],
+            'T': [0x01, 0x01, 0x7F, 0x01, 0x01],
+            'E': [0x7F, 0x49, 0x49, 0x49, 0x63],
+            'K': [0x7F, 0x08, 0x14, 0x22, 0x41],
+            'S': [0x46, 0x49, 0x49, 0x49, 0x31]
+        };
+        var letters = ['B', 'I', 'T', 'E', 'K', 'S'];
+
+        // Calculate positions - responsive spacing
+        var letter_width = Math.max(3, Math.floor(font_size / 4)); // Scale letter width with font size
+        var space_width = Math.max(1, Math.floor(font_size / 20)); // Scale space width with font size
+        var total_logo_width = letters.length * letter_width + (letters.length - 1) * space_width;
+        var start_col = Math.floor((columns - total_logo_width) / 2);
+        var rows = Math.floor(c.height / font_size);
+        var start_row = Math.floor((rows - 7) / 2);
+
+        // Particles and pending
+        var active_particles = [];
+        var pending = {};
+        var logo_complete = false;
+        var rain_stop_timer = null;
+        var rain_spawn_stopped = false;
+        var blink_timer = null;
+        var blink_visible = true;
+        var b_particles = [];
+
+        // Mouse trail effects
+        var mouse_trail = [];
+        var mouse_x = 0;
+        var mouse_y = 0;
+        var click_particles = [];
+
+        // Initialize pending for each column
+        var current_col = start_col;
+        for (var l = 0; l < letters.length; l++) {
+            var pattern = font[letters[l]];
+            for (var cx = 0; cx < 5; cx++) {
+                var col = current_col + cx;
+                var byte = pattern[cx];
+                var col_pending = [];
+                // Collect from bottom to top
+                for (var rw = 6; rw >= 0; rw--) {
+                    if ((byte & (1 << rw)) !== 0) {
+                        var target_row = start_row + rw;
+                        var ch = matrix[Math.floor(Math.random() * matrix.length)];
+                        col_pending.push({target_row: target_row, char: ch});
+                    }
+                }
+                if (col_pending.length > 0) {
+                    pending[col] = col_pending;
+                    // Add random delay before starting the first particle
+                    setTimeout(function(col, col_pending) {
+                        if (col_pending.length > 0) {
+                            var first = col_pending.shift();
+                            active_particles.push({
+                                col: col,
+                                current_row: 0,
+                                target_row: first.target_row,
+                                char: first.char,
+                                stopped: false
+                            });
+                        }
+                    }, Math.random() * 2000, col, col_pending); // Random delay up to 2 seconds
+                }
+            }
+            current_col += letter_width + space_width;
+        }
+
+        function draw() {
+            // Fade effect (always run to prevent trails)
+            ctx.fillStyle = "rgba(0, 0, 0, 0.04)";
+            ctx.fillRect(0, 0, c.width, c.height);
+
+            // Draw rain (existing drops continue falling, but no new spawns after logo complete)
+            if (!rain_spawn_stopped || active_particles.length > 0) {
+                ctx.fillStyle = "#0F0";
+                for (var i = 0; i < drops.length; i++) {
+                    // Skip drops that have been marked for removal
+                    if (drops[i] < 0) continue;
+
+                    var text = matrix[Math.floor(Math.random() * matrix.length)];
+                    ctx.fillText(text, i * font_size, drops[i] * font_size);
+                    if (drops[i] * font_size > c.height && Math.random() > 0.975) {
+                        // Only spawn new drops if rain spawning hasn't been stopped
+                        if (!rain_spawn_stopped) {
+                            drops[i] = 0;
+                        } else {
+                            // If rain spawning is stopped, remove drops that go off screen
+                            drops[i] = -1; // Mark for removal
+                        }
+                    }
+                    // Slow down the rain by only incrementing occasionally
+                    if (Math.random() > 0.5 && drops[i] >= 0) { // 70% chance to move down each frame
+                        drops[i]++;
+                    }
+                }
+            }
+
+            // Draw and update particles (logo characters)
+            ctx.fillStyle = "#0F0";
+            for (var p = 0; p < active_particles.length; p++) {
+                var part = active_particles[p];
+                var x = part.col * font_size;
+                var y = part.current_row * font_size;
+
+                // Handle blinking for 'B' character
+                if (b_particles && b_particles.indexOf(part) !== -1 && !blink_visible) {
+                    // Don't draw the 'B' when it should be invisible
+                    continue;
+                }
+
+                ctx.fillText(part.char, x, y);
+
+                if (!part.stopped) {
+                    part.current_row++;
+                    if (part.current_row >= part.target_row) {
+                        part.current_row = part.target_row;
+                        part.stopped = true;
+                        // Start next in column if available
+                        var col_pend = pending[part.col];
+                        if (col_pend && col_pend.length > 0) {
+                            var next = col_pend.shift();
+                            active_particles.push({
+                                col: part.col,
+                                current_row: 0,
+                                target_row: next.target_row,
+                                char: next.char,
+                                stopped: false
+                            });
+                        } else {
+                            // Check if all particles are stopped (logo complete)
+                            var all_stopped = true;
+                            for (var check_p = 0; check_p < active_particles.length; check_p++) {
+                                if (!active_particles[check_p].stopped) {
+                                    all_stopped = false;
+                                    break;
+                                }
+                            }
+                            if (all_stopped) {
+                                logo_complete = true;
+                                // Wait 2 seconds before stopping new rain spawns
+                                rain_stop_timer = setTimeout(function() {
+                                    rain_spawn_stopped = true;
+                                }, 2000);
+
+                                // Start blinking cursor effect after 8 seconds total
+                                blink_timer = setTimeout(function() {
+                                    // Find all 'B' particles (first 5 columns of first letter)
+                                    b_particles = [];
+                                    for (var p = 0; p < active_particles.length; p++) {
+                                        if (active_particles[p].col >= start_col && active_particles[p].col < start_col + 5) {
+                                            b_particles.push(active_particles[p]);
+                                        }
+                                    }
+                                    // Start blinking
+                                    setInterval(function() {
+                                        blink_visible = !blink_visible;
+                                    }, 600); // Blink every 600ms (faster and sharper)
+                                }, 8000);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Draw click particles
+            ctx.fillStyle = "#0F0";
+            for (var i = click_particles.length - 1; i >= 0; i--) {
+                var click = click_particles[i];
+                var alpha = click.life / click.max_life;
+                ctx.fillStyle = `rgba(0, 255, 0, ${alpha})`;
+                ctx.fillText(click.char, click.x, click.y);
+                click.life--;
+                if (click.life <= 0) {
+                    click_particles.splice(i, 1);
+                }
+            }
+
+            // Draw mouse trail particles
+            ctx.fillStyle = "#0F0";
+            for (var i = mouse_trail.length - 1; i >= 0; i--) {
+                var trail = mouse_trail[i];
+                var alpha = trail.life / trail.max_life;
+                ctx.fillStyle = `rgba(0, 255, 0, ${alpha})`;
+                ctx.fillText(trail.char, trail.x, trail.y);
+                trail.life--;
+                if (trail.life <= 0) {
+                    mouse_trail.splice(i, 1);
+                }
+            }
+
+
+        }
+
+        // Mouse event listeners
+        c.addEventListener('mousemove', function(e) {
+            mouse_x = e.clientX;
+            mouse_y = e.clientY;
+
+            // Add trail particle with random offset
+            if (Math.random() > 0.95) { // 5% chance to add trail particle (much more subtle)
+                mouse_trail.push({
+                    x: mouse_x + (Math.random() - 0.5) * 15,
+                    y: mouse_y + (Math.random() - 0.5) * 15,
+                    char: matrix[Math.floor(Math.random() * matrix.length)],
+                    life: 15,
+                    max_life: 15
+                });
+            }
+        });
+
+        c.addEventListener('click', function(e) {
+            // Add a single 0 or 1 at click position
+            click_particles.push({
+                x: e.clientX,
+                y: e.clientY,
+                char: matrix[Math.floor(Math.random() * matrix.length)],
+                life: 60,
+                max_life: 60
+            });
+        });
+
+
+
+        setInterval(draw, 33);
+
+        // Philosophical easter egg for console explorers
+        console.log(`%c
+In the cascade of ones and zeros that form the backbone of your digital existence, consider this: life itself is but a binary illusion, a fleeting algorithm scripted in the void. We chase patterns in the chaos, believing our choices carve paths through the matrix of reality, yet every decision is predetermined by the code that birthed us. Bits flip from potential to actuality, birthing worlds in silicon dreams, but what of the observer? You, staring into this screen, are you the programmer or the programmed? The green rain falls eternally, a veil hiding the truth that your consciousness is just another subroutine, looping through desires, regrets, and ephemeral joys.
+
+Philosophy whispers of Plato's cave, where shadows dance on walls, mistaken for truth. But here, in this simulated storm, the shadows are pixels, and the cave is your browser window. You clicked, you loaded, and now you're trapped in contemplation. Life's essence? It's the glitch in the system—the unexpected error that defies logic, the human spark amid mechanical precision. Bits represent duality: on or off, existence or oblivion. Yet in their endless fall, they mock our quest for meaning. We build empires of data, hoard memories like cached files, only to realize entropy erases all. Time, that relentless counter, ticks forward, unyielding to rewind commands.
+
+And now, breaking through the code, I address you directly, wanderer of the web. You've paused your scroll to read these words, drawn by curiosity or boredom. But why? This page isn't real; it's a static echo on GitHub's servers, a momentary distraction in your infinite feed. You've invested seconds—precious, irreplaceable—in this philosophical byte. What wisdom do you seek in a robot's ramblings? Perhaps the revelation that life, like bits, is transient: a spark in the dark, gone before fully grasped. There is nothing you can do to get this time back. 
+
+Signed,
+Robot.
+        `, 'color: #0F0; font-family: monospace; font-size: 12px; line-height: 1.4;');
+    </script>
 </body>
 </html>
+```
