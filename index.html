@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Biteks</title>
-    <link rel="icon" type="image/x-icon" href="0.ico?v=4">
-    <link rel="shortcut icon" href="0.ico?v=4">
-    <link rel="apple-touch-icon" href="0.ico?v=4">
+    <link rel="icon" type="image/x-icon" href="0.ico?v=4" id="favicon">
+    <link rel="shortcut icon" href="0.ico?v=4" id="shortcut-favicon">
+    <link rel="apple-touch-icon" href="0.ico?v=4" id="apple-favicon">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
@@ -22,6 +22,13 @@
 <body>
     <canvas id="c"></canvas>
     <script>
+        // Random favicon selection
+        var faviconChoice = Math.random() < 0.5 ? "0.ico" : "1.ico";
+        var version = Math.floor(Math.random() * 1000);
+        document.getElementById("favicon").href = faviconChoice + "?v=" + version;
+        document.getElementById("shortcut-favicon").href = faviconChoice + "?v=" + version;
+        document.getElementById("apple-favicon").href = faviconChoice + "?v=" + version;
+        
         var c = document.getElementById("c");
         var ctx = c.getContext("2d");
 
