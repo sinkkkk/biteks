@@ -77,10 +77,7 @@
         var blink_visible = true;
         var b_particles = [];
 
-        // Mouse trail effects
-        var mouse_trail = [];
-        var mouse_x = 0;
-        var mouse_y = 0;
+        // Click particles
         var click_particles = [];
 
         // Simple glitch effects
@@ -245,15 +242,25 @@
                 }
             }
 
-            // Draw click particles
+            // Draw click particles (falling raindrops)
             ctx.fillStyle = "#0F0";
             for (var i = click_particles.length - 1; i >= 0; i--) {
                 var click = click_particles[i];
                 var alpha = click.life / click.max_life;
                 ctx.fillStyle = `rgba(0, 255, 0, ${alpha})`;
+
+                // Randomly switch between 1 and 0 like real rain
+                if (Math.random() > 0.7) { // 30% chance to change character
+                    click.char = matrix[Math.floor(Math.random() * matrix.length)];
+                }
+
                 ctx.fillText(click.char, click.x, click.y);
+
+                // Make the raindrop fall
+                click.y += click.speed;
                 click.life--;
-                if (click.life <= 0) {
+
+                if (click.life <= 0 || click.y > c.height) {
                     click_particles.splice(i, 1);
                 }
             }
@@ -323,13 +330,30 @@
 
             // Add random glitches anywhere on screen after blinking starts
             if (blink_timer && Math.random() > 0.97) { // 3% chance for glitch (more frequent)
-                glitch_particles.push({
-                    x: Math.random() * c.width,
-                    y: Math.random() * c.height,
-                    char: matrix[Math.floor(Math.random() * matrix.length)],
-                    life: 5,
-                    max_life: 5
-                });
+                // 10% chance to create a raindrop instead of static glitch
+                if (Math.random() > 0.9) {
+                    // Create a falling raindrop from anywhere on screen
+                    var raindrop_x = Math.random() * c.width;
+                    var raindrop_y = Math.random() * c.height;
+                    var raindrop = {
+                        x: raindrop_x,
+                        y: raindrop_y, // Start from random position
+                        char: matrix[Math.floor(Math.random() * matrix.length)],
+                        speed: 8 + Math.random() * 6, // Same speed as click raindrops
+                        life: 120,
+                        max_life: 120
+                    };
+                    click_particles.push(raindrop);
+                } else {
+                    // Regular static glitch
+                    glitch_particles.push({
+                        x: Math.random() * c.width,
+                        y: Math.random() * c.height,
+                        char: matrix[Math.floor(Math.random() * matrix.length)],
+                        life: 5,
+                        max_life: 5
+                    });
+                }
             }
 
             // Add rare red error messages after blinking starts
@@ -356,48 +380,23 @@
                 });
             }
 
-            // Draw mouse trail particles
-            ctx.fillStyle = "#0F0";
-            for (var i = mouse_trail.length - 1; i >= 0; i--) {
-                var trail = mouse_trail[i];
-                var alpha = trail.life / trail.max_life;
-                ctx.fillStyle = `rgba(0, 255, 0, ${alpha})`;
-                ctx.fillText(trail.char, trail.x, trail.y);
-                trail.life--;
-                if (trail.life <= 0) {
-                    mouse_trail.splice(i, 1);
-                }
-            }
+
 
 
         }
 
-        // Mouse event listeners
-        c.addEventListener('mousemove', function(e) {
-            mouse_x = e.clientX;
-            mouse_y = e.clientY;
-
-            // Add trail particle with random offset
-            if (Math.random() > 0.95) { // 5% chance to add trail particle (much more subtle)
-                mouse_trail.push({
-                    x: mouse_x + (Math.random() - 0.5) * 15,
-                    y: mouse_y + (Math.random() - 0.5) * 15,
-                    char: matrix[Math.floor(Math.random() * matrix.length)],
-                    life: 15,
-                    max_life: 15
-                });
-            }
-        });
 
         c.addEventListener('click', function(e) {
-            // Add a single 0 or 1 at click position
-            click_particles.push({
+            // Create a falling raindrop from click position
+            var click_raindrop = {
                 x: e.clientX,
                 y: e.clientY,
                 char: matrix[Math.floor(Math.random() * matrix.length)],
-                life: 60,
-                max_life: 60
-            });
+                speed: 8 + Math.random() * 6, // Much faster fall speed (8-14 pixels per frame)
+                life: 120, // Longer life for raindrop effect
+                max_life: 120
+            };
+            click_particles.push(click_raindrop);
         });
 
 
