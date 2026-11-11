@@ -1,0 +1,12 @@
+// Cloudflare Workers config for biteks.ee
+// Static site lives in ./public. The contact form's /api/contact endpoint
+// (a small Worker script) gets added here in the next step.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "biteks",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page"
+  }
+}

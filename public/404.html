@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biteks: 404</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#040605">
+<link rel="icon" href="/0.ico">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root { --bg: #040605; --fg: #d6e3da; --dim: #7f9688; --g: #3dff7f; --err: #ff4d4d; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100svh; display: grid; place-items: center;
+    background: var(--bg); color: var(--fg);
+    font: 400 15px/1.7 "JetBrains Mono", ui-monospace, Menlo, monospace;
+    padding: 24px 16px;
+  }
+  main { max-width: 34rem; width: 100%; }
+  .brand { font: 10px/1 "Press Start 2P", monospace; color: var(--g); text-decoration: none; letter-spacing: 1px; }
+  pre { margin: 28px 0; white-space: pre-wrap; word-break: break-word; font: inherit; }
+  .err { color: var(--err); }
+  .dim { color: var(--dim); }
+  a { color: var(--g); }
+  .cursor { display: inline-block; width: .6em; height: 1.1em; background: var(--g); vertical-align: -0.2em; animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .cursor { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <a class="brand" href="/">BITEKS</a>
+<pre><span class="dim">~ $ cd <span id="path"></span></span>
+<span class="err">ERR:404 PAGE_NOT_FOUND</span>
+<span class="dim">this bit doesn't exist. maybe it never did.</span>
+
+~ $ <a href="/">cd ~</a> <span class="cursor" aria-hidden="true"></span></pre>
+</main>
+<script>document.getElementById('path').textContent = location.pathname;</script>
+</body>
+</html>
