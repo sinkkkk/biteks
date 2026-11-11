@@ -135,7 +135,17 @@
     scroll-snap-align: center;
     scroll-snap-stop: always;
   }
-  .copy { max-width: min(30rem, 40vw); }
+  /* text sits on a dark panel so it reads easily over the bits (no backdrop blur:
+     it would be re-rendered every frame over the moving canvas) */
+  .copy {
+    max-width: min(32rem, 42vw);
+    background: rgba(4, 6, 5, 0.84);
+    border: 1px solid rgba(61, 255, 127, 0.12);
+    border-radius: 8px;
+    padding: 34px 36px;
+  }
+  /* every other section flips: text right, shape left (see region() in the script) */
+  .section:nth-of-type(odd) { justify-content: flex-end; }
   .label { font: 10px/1 var(--pixel); color: var(--g); letter-spacing: 1px; }
   .section h2 {
     font: 600 clamp(28px, 3.2vw, 42px)/1.15 var(--mono);
@@ -255,8 +265,8 @@
     .hero { padding-top: 47svh; }
     .section { align-items: flex-end; padding: 46svh 16px 8svh; }
     .copy {
-      max-width: none;
-      background: rgba(4, 6, 5, 0.9); /* no backdrop blur: it re-renders every frame over the moving bits */
+      max-width: none; width: 100%;
+      background: rgba(4, 6, 5, 0.9);
       padding: 22px 20px; border-radius: 6px;
       border: 1px solid rgba(61,255,127,.1);
     }
@@ -634,16 +644,17 @@
     let current = null, t0 = performance.now(), rain = 6, storm = 1, scrollY0 = scrollY;
     const mouse = { x: -1e4, y: -1e4, on: false };
 
-    // Shape area in PAGE coordinates, anchored to the shape's own section, so the
-    // shape scrolls with its section instead of sitting still behind the page.
+    // Shape area in screen coordinates. Shapes stay put (scroll snapping always
+    // brings a section to rest centered) and swap when the section changes. Moving
+    // them with the scroll made them trail a frame behind the text, which read as lag.
+    // Alternate sections (.section:nth-of-type(odd)) have their text on the right,
+    // so their shape goes on the left.
     function region(name) {
+      if (name === 'hero') return mobile ? [W * 0.03, H * 0.17, W * 0.94, H * 0.22] : [W * 0.08, H * 0.17, W * 0.84, H * 0.3];
+      if (mobile) return [W * 0.06, H * 0.09, W * 0.88, H * 0.32];
       const el = document.querySelector(`[data-shape="${name}"]`);
-      const r = el ? el.getBoundingClientRect() : { top: 0, height: H };
-      const top = r.top + scrollY;
-      if (name === 'hero') return mobile ? [W * 0.03, top + H * 0.17, W * 0.94, H * 0.22] : [W * 0.08, top + H * 0.17, W * 0.84, H * 0.3];
-      if (mobile) return [W * 0.06, top + H * 0.09, W * 0.88, H * 0.32];
-      const rh = H * 0.64;
-      return [W * 0.52, top + Math.max(H * 0.18, (r.height - rh) / 2), W * 0.42, rh];
+      const flip = el && el.matches('.section:nth-of-type(odd)');
+      return [flip ? W * 0.06 : W * 0.52, H * 0.18, W * 0.42, H * 0.64];
     }
 
     function cellsFor(name) {
@@ -710,7 +721,7 @@
         pend[i] = 1;
         if (reduced) {
           at[i] = 0;
-          if (nhas[i]) { px[i] = ntx[i]; py[i] = nty[i] - scrollY; vx[i] = vy[i] = 0; }
+          if (nhas[i]) { px[i] = ntx[i]; py[i] = nty[i]; vx[i] = vy[i] = 0; }
         } else if (opts.intro) {
           at[i] = now + rand(0.35, 1.9);
           if (nhas[i]) { px[i] = rand(0, W); py[i] = rand(-H * 0.8, -10); vy[i] = rand(5, 10); }
@@ -732,11 +743,10 @@
     }
 
     const K = 0.05, DAMP = 0.8;
-    let last = performance.now(), lastSY = scrollY;
+    let last = performance.now();
     function frame(nowMs) {
       const f = Math.min(3, (nowMs - last) / (1000 / 60)); last = nowMs;
       const now = nowMs / 1000, t = (nowMs - t0) / 1000;
-      const sY = scrollY, dS = sY - lastSY; lastSY = sY;
       const dampF = Math.pow(DAMP, f), mR = mobile ? 70 : 105, mR2 = mR * mR;
       rain += (storm - rain) * (1 - Math.pow(0.97, f));
       for (let i = 0; i < N; i++) {
@@ -745,15 +755,11 @@
           if (has[i] && !reduced) { vx[i] += rand(-2.5, 2.5); vy[i] += rand(-3, 1); }
           has[i] = nhas[i]; tx[i] = ntx[i]; ty[i] = nty[i];
         }
-        // Move with the page right away: shape bits exactly, background bits with
-        // a little parallax (closer/bigger bits move more).
-        if (dS) py[i] -= has[i] ? dS : dS * (size[i] - 0.45);
         if (has[i]) {
-          const tyS = ty[i] - sY; // target in screen coordinates
-          if (reduced) { px[i] = tx[i]; py[i] = tyS; vx[i] = vy[i] = 0; }
+          if (reduced) { px[i] = tx[i]; py[i] = ty[i]; vx[i] = vy[i] = 0; }
           else {
             vx[i] = (vx[i] + (tx[i] - px[i]) * K * f) * dampF;
-            vy[i] = (vy[i] + (tyS - py[i]) * K * f) * dampF;
+            vy[i] = (vy[i] + (ty[i] - py[i]) * K * f) * dampF;
           }
         } else if (!reduced) {
           vy[i] += (fall[i] * rain - vy[i]) * 0.04 * f;
@@ -775,7 +781,7 @@
 
         if (!has[i] && !pend[i]) {
           if (py[i] > H + 20) { py[i] = rand(-60, -10); px[i] = rand(0, W); }
-          else if (py[i] < -60) { py[i] = H + rand(0, 40); px[i] = rand(0, W); } // pushed off the top by scrolling
+          else if (py[i] < -H) { py[i] = rand(-60, -10); }
           if (px[i] < -20) px[i] = W + 10; else if (px[i] > W + 20) px[i] = -10;
         }
         if (!reduced && Math.random() < (has[i] ? 0.0015 : 0.008) * f) glyph[i] = 1 - glyph[i];
@@ -795,7 +801,8 @@
 
     function nudgeScroll() {
       const d = Math.abs(scrollY - scrollY0); scrollY0 = scrollY;
-      if (!reduced) rain = Math.max(rain, storm + Math.min(d / 35, 4));
+      // gentle: a snap glide shouldn't turn the rain into a storm
+      if (!reduced) rain = Math.max(rain, storm + Math.min(d / 90, 1.2));
     }
 
     async function start(firstShape) {
@@ -826,15 +833,18 @@
      PAGE — scroll → shape, hero typing, reveals
      ===================================================================== */
   const sections = $$('[data-shape]');
-  // The section crossing 60% down the screen owns the bits, so the next shape
-  // starts forming as its section scrolls in, not halfway through it.
+  // Which section owns the bits: the one crossing a line placed ahead of the
+  // scroll direction (75% down when scrolling down, 25% when scrolling up), so the
+  // next shape starts forming as soon as its section starts sliding in.
+  let lastY = scrollY, dir = 1;
   function activeShape() {
-    const line = innerHeight * 0.6;
+    const line = innerHeight * (dir > 0 ? 0.75 : 0.25);
     for (const s of sections) { const r = s.getBoundingClientRect(); if (r.top <= line && r.bottom > line) return s.dataset.shape; }
     return null;
   }
   let ticking = false;
   addEventListener('scroll', () => {
+    if (scrollY !== lastY) { dir = scrollY > lastY ? 1 : -1; lastY = scrollY; }
     if (ticking) return; ticking = true;
     requestAnimationFrame(() => { ticking = false; const s = activeShape(); if (s && Field) Field.setShape(s); });
   }, { passive: true });
