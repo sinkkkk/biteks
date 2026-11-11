@@ -228,6 +228,15 @@
   .term-cmd input { flex: 1; border: 0; background: none; padding: 4px 0; color: var(--g); }
   .term-cmd input.secret { -webkit-text-security: disc; text-security: disc; }
 
+  /* ---------- ?debug readout ---------- */
+  .dbg {
+    position: fixed; left: 8px; top: 64px; z-index: 300; margin: 0;
+    max-width: calc(100vw - 16px); white-space: pre-wrap;
+    font: 500 11px/1.5 var(--mono); color: var(--g);
+    background: rgba(0, 0, 0, 0.88); border: 1px solid var(--g-dim); border-radius: 4px;
+    padding: 8px 10px; pointer-events: none;
+  }
+
   /* ---------- time machine ---------- */
   .timewarp { position: fixed; inset: 0; z-index: 100; background: #000; opacity: 0; transition: opacity .3s; }
   .timewarp.on { opacity: 1; animation: crt .55s steps(6) both; }
@@ -436,10 +445,21 @@
      as slow background rain, or are assigned a grid cell in the current
      shape and spring toward it.
      ===================================================================== */
+  /* ?debug shows a performance readout; ?dpr=1, ?n=1000 and ?nofield switch
+     parts of the animation down or off, to narrow down what's slow on a device. */
+  const Q = new URLSearchParams(location.search);
+  const DEBUG = Q.has('debug');
+  const stats = { gaps: [], js: [], stalls: [], evt: '-', evtT: 0, renderer: '-', dpr: 0, n: 0, w: 0, h: 0 };
+  const mark = e => { stats.evt = e; stats.evtT = performance.now(); };
+
   const Field = (() => {
     const canvas = $('#field');
-    const gl = canvas.getContext('webgl2', { antialias: false, alpha: false });
+    const gl = Q.has('nofield') ? null : canvas.getContext('webgl2', { antialias: false, alpha: false });
     if (!gl) { document.documentElement.classList.add('no-webgl'); return null; }
+    if (DEBUG) {
+      const ri = gl.getExtension('WEBGL_debug_renderer_info');
+      stats.renderer = ri ? gl.getParameter(ri.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+    }
 
     const VS = `#version 300 es
       in vec2 a_pos; in float a_glyph; in float a_bright; in float a_size;
@@ -690,7 +710,7 @@
       // scroll doesn't change its size; skip those resize events entirely.
       const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
       if (!first && w === W && h === H) return;
-      W = w; H = h; DPR = Math.min(devicePixelRatio || 1, 2);
+      W = w; H = h; DPR = Math.min(devicePixelRatio || 1, Q.get('dpr') ? +Q.get('dpr') : 2);
       mobile = W < 900;
       CELL = Math.max(6, Math.min(10, Math.round(Math.min(W, 1600) / 150)));
       // very narrow screens: shrink the bits so BITEKS (48 cells + margin) still fits the hero
@@ -700,7 +720,8 @@
       canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform2f(uRes, W, H); gl.uniform1f(uCell, CELL); gl.uniform1f(uDpr, DPR);
-      const wantN = mobile ? 1500 : 3000;
+      const wantN = Q.get('n') ? +Q.get('n') : mobile ? 1500 : 3000;
+      Object.assign(stats, { dpr: DPR, n: wantN, w: canvas.width, h: canvas.height });
       if (first || wantN !== N) { N = wantN; alloc(); }
       MIN_AMBIENT = mobile ? 500 : 900;
       if (!first && current) setShape(current, { force: true, fast: true });
@@ -709,6 +730,7 @@
     function setShape(name, opts = {}) {
       if (name === current && !opts.force) return;
       current = name;
+      mark('shape:' + name);
       const cells = cellsFor(name);
       for (let i = cells.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [cells[i], cells[j]] = [cells[j], cells[i]]; }
       cells.length = Math.min(cells.length, N - MIN_AMBIENT);
@@ -745,6 +767,11 @@
     const K = 0.05, DAMP = 0.8;
     let last = performance.now();
     function frame(nowMs) {
+      const jsStart = performance.now(), gap = nowMs - last;
+      if (DEBUG && gap > 50 && document.visibilityState === 'visible') {
+        stats.stalls.push({ at: Math.round(nowMs / 100) / 10, gap: Math.round(gap), evt: stats.evt, ago: Math.round(nowMs - stats.evtT) });
+        if (stats.stalls.length > 6) stats.stalls.shift();
+      }
       const f = Math.min(3, (nowMs - last) / (1000 / 60)); last = nowMs;
       const now = nowMs / 1000, t = (nowMs - t0) / 1000;
       const dampF = Math.pow(DAMP, f), mR = mobile ? 70 : 105, mR2 = mR * mR;
@@ -796,6 +823,10 @@
       gl.clearColor(0.016, 0.024, 0.02, 1); gl.clear(gl.COLOR_BUFFER_BIT);
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, data);
       gl.drawArrays(gl.POINTS, 0, N);
+      if (DEBUG) {
+        stats.gaps.push(gap); stats.js.push(performance.now() - jsStart);
+        if (stats.gaps.length > 240) { stats.gaps.shift(); stats.js.shift(); }
+      }
       requestAnimationFrame(frame);
     }
 
@@ -813,7 +844,8 @@
       resize(true);
       setShape(firstShape, { intro: firstShape === 'hero' });
       let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => resize(false), 150); });
-      addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.on = true; }, { passive: true });
+      addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.on = true; if (DEBUG) mark('mouse'); }, { passive: true });
+      if (DEBUG) addEventListener('scroll', () => mark('scroll'), { passive: true });
       document.addEventListener('pointerleave', () => { mouse.on = false; });
       // touch: forget the finger when it lifts or when the browser takes over to scroll
       const lift = e => { if (e.pointerType !== 'mouse') mouse.on = false; };
@@ -850,6 +882,43 @@
   }, { passive: true });
 
   if (Field) Field.start(activeShape() || 'hero');
+
+  /* ---------- ?debug readout ---------- */
+  if (DEBUG) {
+    const box = document.createElement('pre');
+    box.className = 'dbg';
+    document.body.appendChild(box);
+    let longTasks = 0, longMax = 0;
+    try { new PerformanceObserver(l => l.getEntries().forEach(e => { longTasks++; longMax = Math.max(longMax, e.duration); })).observe({ type: 'longtask' }); } catch (_) { /* unsupported */ }
+    if (!Field) { // ?nofield: still measure frame timing of the page itself
+      let lt = performance.now();
+      (function probe(t) {
+        const g = t - lt; lt = t;
+        stats.gaps.push(g); if (stats.gaps.length > 240) stats.gaps.shift();
+        if (g > 50 && document.visibilityState === 'visible') {
+          stats.stalls.push({ at: Math.round(t / 100) / 10, gap: Math.round(g), evt: stats.evt, ago: Math.round(t - stats.evtT) });
+          if (stats.stalls.length > 6) stats.stalls.shift();
+        }
+        requestAnimationFrame(probe);
+      })(lt);
+      addEventListener('pointermove', () => mark('mouse'), { passive: true });
+      addEventListener('scroll', () => mark('scroll'), { passive: true });
+    }
+    const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : 0;
+    const max = a => a.length ? Math.max(...a) : 0;
+    setInterval(() => {
+      const g = stats.gaps.slice(-120), j = stats.js.slice(-120);
+      box.textContent = [
+        `fps        ${avg(g) ? Math.round(1000 / avg(g)) : '-'}  (worst frame ${Math.round(max(g))} ms)`,
+        `js/frame   ${avg(j).toFixed(2)} ms  (max ${max(j).toFixed(1)})`,
+        `long tasks ${longTasks}  (max ${Math.round(longMax)} ms)`,
+        `canvas     ${Field ? `${stats.w}×${stats.h} @${stats.dpr}x · ${stats.n} bits` : 'off (?nofield)'}`,
+        `gpu        ${stats.renderer}`,
+        `freezes >50ms, newest last:`,
+        ...(stats.stalls.length ? stats.stalls.map(s => `  ${s.gap} ms, ${s.ago} ms after ${s.evt}`) : ['  none']),
+      ].join('\n');
+    }, 300);
+  }
 
   const tag = $('#tagline'), text = tag.dataset.text;
   const showLater = () => $$('.later').forEach((el, k) => setTimeout(() => el.classList.add('show'), reduced ? 0 : k * 180));
