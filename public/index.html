@@ -28,7 +28,12 @@
     --gutter: 8vw;
   }
   * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; background: var(--bg); }
+  html {
+    scroll-behavior: smooth; background: var(--bg);
+    /* every section is a resting point: a scroll or fling ends with that section
+       centered, and one swipe can't glide past a whole section */
+    scroll-snap-type: y mandatory;
+  }
   body {
     margin: 0;
     background: var(--bg);
@@ -41,8 +46,9 @@
   a { color: var(--g); }
 
   #field {
-    position: fixed; inset: 0;
-    width: 100vw; height: 100vh;
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100vh;
+    height: 100lvh; /* largest viewport: doesn't change when a phone's address bar hides */
     z-index: 0;
     pointer-events: none;
   }
@@ -57,6 +63,8 @@
     padding: 22px var(--gutter);
     z-index: 5;
     font: 500 13px/1 var(--mono);
+    /* keeps the menu readable while shapes scroll underneath */
+    background: linear-gradient(rgba(4, 6, 5, 0.92) 55%, rgba(4, 6, 5, 0));
   }
   .brand { font: 10px/1 var(--pixel); color: var(--g); text-decoration: none; letter-spacing: 1px; }
   nav ul { list-style: none; display: flex; gap: 28px; margin: 0; padding: 0; }
@@ -69,6 +77,7 @@
     display: flex; flex-direction: column; align-items: center;
     padding: 53svh var(--gutter) 10svh;
     text-align: center;
+    scroll-snap-align: start;
   }
   .hero h1 {
     position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
@@ -121,6 +130,10 @@
     min-height: 100svh;
     display: flex; align-items: center;
     padding: 14svh var(--gutter);
+    /* stop with the section centered; "always" means a fast fling still stops
+       here instead of skipping on to the next section */
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
   }
   .copy { max-width: min(30rem, 40vw); }
   .label { font: 10px/1 var(--pixel); color: var(--g); letter-spacing: 1px; }
@@ -151,6 +164,7 @@
     padding: 40px var(--gutter) 90px;
     font: 500 12px/1.6 var(--mono); color: var(--dim);
     display: flex; flex-wrap: wrap; gap: 10px 40px;
+    scroll-snap-align: end; /* without this, snapping would never let you reach the footer */
   }
 
   /* ---------- terminal ---------- */
@@ -168,11 +182,11 @@
     position: fixed; right: 22px; bottom: 80px; z-index: 30;
     width: min(440px, calc(100vw - 32px));
     max-height: calc(100svh - 120px);
+    max-height: calc(100dvh - 120px); /* shrinks with the on-screen keyboard */
     display: flex; flex-direction: column;
-    background: var(--panel);
+    background: rgba(6, 12, 9, 0.96);
     border: 1px solid var(--g-dim); border-radius: 6px;
     box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 30px 80px rgba(0,0,0,.6), 0 0 40px rgba(61,255,127,.08);
-    backdrop-filter: blur(6px);
     font: 400 13px/1.55 var(--mono);
     opacity: 0; transform: translateY(12px) scale(.98); transform-origin: bottom right;
     transition: opacity .22s ease, transform .22s ease;
@@ -226,24 +240,34 @@
   @media (max-width: 899px) {
     :root { --gutter: 20px; }
     body { font-size: 16px; }
-    nav ul { gap: 16px; }
+    nav { padding: 12px var(--gutter); }
+    nav ul { gap: 4px; align-items: center; }
     nav ul li.opt { display: none; }
+    nav ul a { display: block; padding: 10px 8px; } /* thumb-sized tap targets */
+    /* on phones the menu's "contact" is the terminal button; the floating one would cover text */
+    #navContact {
+      color: var(--g); border: 1px solid var(--g-dim); border-radius: 4px;
+      display: flex; align-items: center; gap: 8px; margin-left: 4px; padding: 9px 12px;
+    }
+    #navContact::before { content: ""; width: 7px; height: 12px; background: var(--g); animation: blink 1.1s steps(1) infinite; }
+    .term-btn { display: none; }
+    .tagline { font-size: 18px; }
     .hero { padding-top: 47svh; }
     .section { align-items: flex-end; padding: 46svh 16px 8svh; }
     .copy {
       max-width: none;
-      background: rgba(4, 6, 5, 0.78);
-      backdrop-filter: blur(3px);
+      background: rgba(4, 6, 5, 0.9); /* no backdrop blur: it re-renders every frame over the moving bits */
       padding: 22px 20px; border-radius: 6px;
       border: 1px solid rgba(61,255,127,.1);
     }
-    .term { right: 16px; left: 16px; width: auto; bottom: 76px; }
-    .term-btn { right: 16px; bottom: 16px; }
+    .term { right: 12px; left: 12px; width: auto; bottom: 12px; max-height: calc(100svh - 88px); max-height: calc(100dvh - 88px); }
+    /* 16px+ stops iPhones from zooming the page when a field is focused */
+    .term input, .term textarea { font-size: 16px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
-    .cursor, .term-btn .blk { animation: none; }
+    .cursor, .term-btn .blk, #navContact::before { animation: none; }
     .later, .reveal, .term, .timewarp { transition: none; }
     .timewarp.on { animation: none; }
   }
@@ -257,7 +281,7 @@
   <ul>
     <li><a href="#web">services</a></li>
     <li class="opt"><a href="#work">work</a></li>
-    <li><a href="#contact">contact</a></li>
+    <li><a href="#contact" id="navContact">contact</a></li>
   </ul>
 </nav>
 
@@ -610,9 +634,16 @@
     let current = null, t0 = performance.now(), rain = 6, storm = 1, scrollY0 = scrollY;
     const mouse = { x: -1e4, y: -1e4, on: false };
 
+    // Shape area in PAGE coordinates, anchored to the shape's own section, so the
+    // shape scrolls with its section instead of sitting still behind the page.
     function region(name) {
-      if (name === 'hero') return mobile ? [W * 0.05, H * 0.17, W * 0.9, H * 0.22] : [W * 0.08, H * 0.17, W * 0.84, H * 0.3];
-      return mobile ? [W * 0.06, H * 0.09, W * 0.88, H * 0.32] : [W * 0.52, H * 0.18, W * 0.42, H * 0.64];
+      const el = document.querySelector(`[data-shape="${name}"]`);
+      const r = el ? el.getBoundingClientRect() : { top: 0, height: H };
+      const top = r.top + scrollY;
+      if (name === 'hero') return mobile ? [W * 0.03, top + H * 0.17, W * 0.94, H * 0.22] : [W * 0.08, top + H * 0.17, W * 0.84, H * 0.3];
+      if (mobile) return [W * 0.06, top + H * 0.09, W * 0.88, H * 0.32];
+      const rh = H * 0.64;
+      return [W * 0.52, top + Math.max(H * 0.18, (r.height - rh) / 2), W * 0.42, rh];
     }
 
     function cellsFor(name) {
@@ -644,11 +675,17 @@
     }
 
     function resize(first) {
-      W = innerWidth; H = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2);
+      // The canvas is 100lvh tall, so a phone's address bar sliding in and out on
+      // scroll doesn't change its size; skip those resize events entirely.
+      const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight;
+      if (!first && w === W && h === H) return;
+      W = w; H = h; DPR = Math.min(devicePixelRatio || 1, 2);
       mobile = W < 900;
       CELL = Math.max(6, Math.min(10, Math.round(Math.min(W, 1600) / 150)));
       // very narrow screens: shrink the bits so BITEKS (48 cells + margin) still fits the hero
       CELL = Math.min(CELL, Math.max(3, Math.floor(W * 0.9 / 50)));
+      // phones: size the bits so BITEKS fills the width (48 cells + a little margin)
+      if (mobile) CELL = Math.max(3, Math.min(9, Math.floor(W * 0.94 / 50)));
       canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform2f(uRes, W, H); gl.uniform1f(uCell, CELL); gl.uniform1f(uDpr, DPR);
@@ -673,12 +710,12 @@
         pend[i] = 1;
         if (reduced) {
           at[i] = 0;
-          if (nhas[i]) { px[i] = ntx[i]; py[i] = nty[i]; vx[i] = vy[i] = 0; }
+          if (nhas[i]) { px[i] = ntx[i]; py[i] = nty[i] - scrollY; vx[i] = vy[i] = 0; }
         } else if (opts.intro) {
           at[i] = now + rand(0.35, 1.9);
           if (nhas[i]) { px[i] = rand(0, W); py[i] = rand(-H * 0.8, -10); vy[i] = rand(5, 10); }
         } else {
-          at[i] = now + (opts.fast ? rand(0, 0.15) : rand(0, 0.9));
+          at[i] = now + (opts.fast ? rand(0, 0.12) : rand(0, 0.35));
         }
       }
     }
@@ -694,11 +731,12 @@
       }
     }
 
-    const K = 0.035, DAMP = 0.84;
-    let last = performance.now();
+    const K = 0.05, DAMP = 0.8;
+    let last = performance.now(), lastSY = scrollY;
     function frame(nowMs) {
       const f = Math.min(3, (nowMs - last) / (1000 / 60)); last = nowMs;
       const now = nowMs / 1000, t = (nowMs - t0) / 1000;
+      const sY = scrollY, dS = sY - lastSY; lastSY = sY;
       const dampF = Math.pow(DAMP, f), mR = mobile ? 70 : 105, mR2 = mR * mR;
       rain += (storm - rain) * (1 - Math.pow(0.97, f));
       for (let i = 0; i < N; i++) {
@@ -707,9 +745,16 @@
           if (has[i] && !reduced) { vx[i] += rand(-2.5, 2.5); vy[i] += rand(-3, 1); }
           has[i] = nhas[i]; tx[i] = ntx[i]; ty[i] = nty[i];
         }
+        // Move with the page right away: shape bits exactly, background bits with
+        // a little parallax (closer/bigger bits move more).
+        if (dS) py[i] -= has[i] ? dS : dS * (size[i] - 0.45);
         if (has[i]) {
-          vx[i] = (vx[i] + (tx[i] - px[i]) * K * f) * dampF;
-          vy[i] = (vy[i] + (ty[i] - py[i]) * K * f) * dampF;
+          const tyS = ty[i] - sY; // target in screen coordinates
+          if (reduced) { px[i] = tx[i]; py[i] = tyS; vx[i] = vy[i] = 0; }
+          else {
+            vx[i] = (vx[i] + (tx[i] - px[i]) * K * f) * dampF;
+            vy[i] = (vy[i] + (tyS - py[i]) * K * f) * dampF;
+          }
         } else if (!reduced) {
           vy[i] += (fall[i] * rain - vy[i]) * 0.04 * f;
           vx[i] += (Math.sin(t * 0.4 + phase[i]) * 0.18 - vx[i]) * 0.04 * f;
@@ -730,7 +775,7 @@
 
         if (!has[i] && !pend[i]) {
           if (py[i] > H + 20) { py[i] = rand(-60, -10); px[i] = rand(0, W); }
-          else if (py[i] < -H) { py[i] = rand(-60, -10); }
+          else if (py[i] < -60) { py[i] = H + rand(0, 40); px[i] = rand(0, W); } // pushed off the top by scrolling
           if (px[i] < -20) px[i] = W + 10; else if (px[i] > W + 20) px[i] = -10;
         }
         if (!reduced && Math.random() < (has[i] ? 0.0015 : 0.008) * f) glyph[i] = 1 - glyph[i];
@@ -763,7 +808,10 @@
       let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => resize(false), 150); });
       addEventListener('pointermove', e => { mouse.x = e.clientX; mouse.y = e.clientY; mouse.on = true; }, { passive: true });
       document.addEventListener('pointerleave', () => { mouse.on = false; });
-      addEventListener('pointerup', e => { if (e.pointerType !== 'mouse') mouse.on = false; });
+      // touch: forget the finger when it lifts or when the browser takes over to scroll
+      const lift = e => { if (e.pointerType !== 'mouse') mouse.on = false; };
+      addEventListener('pointerup', lift);
+      addEventListener('pointercancel', lift);
       addEventListener('scroll', nudgeScroll, { passive: true });
       requestAnimationFrame(t => { last = t; frame(t); });
     }
@@ -778,18 +826,20 @@
      PAGE — scroll → shape, hero typing, reveals
      ===================================================================== */
   const sections = $$('[data-shape]');
-  function shapeAtCenter() {
-    const mid = innerHeight * 0.5;
-    for (const s of sections) { const r = s.getBoundingClientRect(); if (r.top <= mid && r.bottom > mid) return s.dataset.shape; }
+  // The section crossing 60% down the screen owns the bits, so the next shape
+  // starts forming as its section scrolls in, not halfway through it.
+  function activeShape() {
+    const line = innerHeight * 0.6;
+    for (const s of sections) { const r = s.getBoundingClientRect(); if (r.top <= line && r.bottom > line) return s.dataset.shape; }
     return null;
   }
   let ticking = false;
   addEventListener('scroll', () => {
     if (ticking) return; ticking = true;
-    requestAnimationFrame(() => { ticking = false; const s = shapeAtCenter(); if (s && Field) Field.setShape(s); });
+    requestAnimationFrame(() => { ticking = false; const s = activeShape(); if (s && Field) Field.setShape(s); });
   }, { passive: true });
 
-  if (Field) Field.start(shapeAtCenter() || 'hero');
+  if (Field) Field.start(activeShape() || 'hero');
 
   const tag = $('#tagline'), text = tag.dataset.text;
   const showLater = () => $$('.later').forEach((el, k) => setTimeout(() => el.classList.add('show'), reduced ? 0 : k * 180));
@@ -831,6 +881,13 @@
     (opener || btn).focus();
   }
   btn.addEventListener('click', e => term.hidden ? openTerm(e) : closeTerm());
+  // phones: the menu's "contact" opens the terminal (desktop: it scrolls to the contact section)
+  const phone = matchMedia('(max-width: 899px)');
+  $('#navContact').addEventListener('click', e => {
+    if (!phone.matches) return;
+    e.preventDefault();
+    term.hidden ? openTerm(e) : closeTerm();
+  });
   $$('[data-open-term]').forEach(b => b.addEventListener('click', openTerm));
   $('.term-x').addEventListener('click', closeTerm);
   term.addEventListener('keydown', e => { if (e.key === 'Escape') closeTerm(); });
