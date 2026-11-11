@@ -1,17 +1,23 @@
 // Cloudflare Workers config for biteks.ee
-// Static site in ./public; src/worker.js only runs for /api/* (the contact form).
+// Static site in ./public, served through src/worker.js, which also handles
+// the contact form (/api/contact) and redirects www.biteks.ee to biteks.ee.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "biteks",
   // Personal account (siim@biteks.ee). Pinned so a deploy can never land in the work account.
   "account_id": "e02cfb3fb3bbcf88a3d126bb92d8ae59",
   "compatibility_date": "2026-10-01",
+  // Cloudflare creates the DNS records and HTTPS certificates for these itself.
+  "routes": [
+    { "pattern": "biteks.ee", "custom_domain": true },
+    { "pattern": "www.biteks.ee", "custom_domain": true }
+  ],
   "main": "src/worker.js",
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
     "not_found_handling": "404-page",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": true
   },
   // At most 3 contact messages per visitor IP per minute.
   "ratelimits": [

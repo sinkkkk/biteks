@@ -16,6 +16,10 @@ const MAX_BODY = 20_000; // bytes
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.hostname === 'www.biteks.ee') {
+      url.hostname = 'biteks.ee';
+      return Response.redirect(url.toString(), 301);
+    }
     if (url.pathname === '/api/contact') return contact(request, env, url);
     return env.ASSETS.fetch(request);
   },
