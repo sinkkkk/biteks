@@ -4,6 +4,8 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "biteks",
+  // Personal account (siim@biteks.ee). Pinned so a deploy can never land in the work account.
+  "account_id": "e02cfb3fb3bbcf88a3d126bb92d8ae59",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./public",

@@ -645,6 +645,8 @@
       W = innerWidth; H = innerHeight; DPR = Math.min(devicePixelRatio || 1, 2);
       mobile = W < 900;
       CELL = Math.max(6, Math.min(10, Math.round(Math.min(W, 1600) / 150)));
+      // very narrow screens: shrink the bits so BITEKS (48 cells + margin) still fits the hero
+      CELL = Math.min(CELL, Math.max(3, Math.floor(W * 0.9 / 50)));
       canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.uniform2f(uRes, W, H); gl.uniform1f(uCell, CELL); gl.uniform1f(uDpr, DPR);

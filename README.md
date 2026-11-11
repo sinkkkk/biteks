@@ -23,8 +23,16 @@ The contact form posts to `/api/contact`, which only exists on Cloudflare. Local
 
 ## Deploy
 
+Always go through the npm scripts, never plain `npx wrangler`. `~/.zshrc` exports the work
+account's `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID`, and the machine-wide wrangler login
+is the work account too. The scripts remove both and keep a separate personal login in
+`.wrangler-home/` (gitignored).
+
 ```
-npx wrangler deploy
+npm install
+npm run login     # once, log in as the personal account
+npm run whoami    # should show the personal account
+npm run deploy
 ```
 
 ## Terminal easter eggs
