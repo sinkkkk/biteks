@@ -8,6 +8,7 @@
   "account_id": "e02cfb3fb3bbcf88a3d126bb92d8ae59",
   "compatibility_date": "2026-10-01",
   // Cloudflare creates the DNS records and HTTPS certificates for these itself.
+  "workers_dev": false,
   "routes": [
     { "pattern": "biteks.ee", "custom_domain": true },
     { "pattern": "www.biteks.ee", "custom_domain": true }

@@ -16,8 +16,11 @@ const MAX_BODY = 20_000; // bytes
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.hostname === 'www.biteks.ee') {
-      url.hostname = 'biteks.ee';
+    // One canonical address: https://biteks.ee (http and www both redirect there).
+    const local = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    if (url.hostname === 'www.biteks.ee' || (url.protocol === 'http:' && !local)) {
+      url.hostname = url.hostname.replace(/^www\./, '');
+      url.protocol = 'https:';
       return Response.redirect(url.toString(), 301);
     }
     if (url.pathname === '/api/contact') return contact(request, env, url);
