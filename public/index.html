@@ -189,7 +189,8 @@
   .term-log .dim { color: var(--dim); }
   .term-log .ok { color: var(--g); }
   .term-log .err { color: var(--err); }
-  .term form { display: grid; gap: 10px; margin: 12px 0 14px; }
+  .term form { display: grid; gap: 10px; margin: 12px 0 14px; position: relative; }
+  .term .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
   #log { margin-bottom: 8px; }
   .term label { display: grid; gap: 4px; color: var(--dim); font-size: 12px; }
   .term input, .term textarea {
@@ -377,6 +378,7 @@
   <div class="term-body">
     <div class="term-log"><div class="ok">&gt; hi. leave a message below. i read everything.</div></div>
     <form id="cform" novalidate>
+      <label class="hp" aria-hidden="true">website<input name="website" tabindex="-1" autocomplete="off"></label>
       <label>name<input name="name" required autocomplete="name"></label>
       <label>email<input name="email" type="email" required autocomplete="email"></label>
       <label>what are you building?<textarea name="message" rows="4" required></textarea></label>
@@ -845,13 +847,17 @@
     print(`$ send --from "${data.name.trim()}"`);
     sendBtn.disabled = true;
     print('> encoding…', 'dim');
-    const [res] = await Promise.all([
+    const [status] = await Promise.all([
       fetch('/api/contact', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
-        .then(r => r.ok, () => false),
+        .then(r => r.status, () => 0),
       pause(600),
     ]);
     sendBtn.disabled = false;
-    if (res) {
+    if (status === 429) {
+      print('ERR:RATE_LIMITED. give it a minute and try again.', 'err');
+    } else if (status === 400) {
+      print('ERR:INVALID_INPUT. check the email address.', 'err');
+    } else if (status === 200) {
       print(bin(data.message.trim().slice(0, 4) || 'hi'), 'ok');
       await pause(280);
       print('> sent. i will get back to you soon.', 'ok');
