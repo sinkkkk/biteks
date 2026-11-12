@@ -368,18 +368,6 @@
     </div>
   </section>
 
-  <section class="section" data-shape="signage">
-    <div class="copy reveal">
-      <div class="label">04 / WORK · 03</div>
-      <h2>Play</h2>
-      <p class="kicker">Digital signage platform</p>
-      <p class="role">role · Software Engineer</p>
-      <p>Design, schedule and play menus, promotions and dashboards on screens from one place. Runs on 100+ screen types and keeps playing when the internet drops. Used by 2,500+ organizations on 25,000+ screens.</p>
-      <ul class="tags"><li>screen networks</li><li>scheduling</li><li>offline playback</li></ul>
-      <a class="visit" href="https://playsignage.com" target="_blank" rel="noopener">playsignage.com ↗</a>
-    </div>
-  </section>
-
   <section class="section" data-shape="more">
     <div class="copy reveal">
       <div class="label">04 / WORK · +</div>
@@ -621,17 +609,6 @@
         [[0, 0], [n - 3, 0], [0, n - 3]].forEach(([i, j]) => { g.rect(qx + i * m, qy + j * m, m * 3 - 1, m * 3 - 1); g.fill(qx + i * m + m, qy + j * m + m, m * 0.7, m * 0.7); });
         g.line(46, 16, 84, 16); g.line(46, 22, 70, 22);
         [[50, 40], [63, 40], [76, 40], [89, 40], [56, 57], [69, 57], [82, 57]].forEach(([x, y], k) => k < 5 ? g.dot(x, y, 4.2) : g.ring(x, y, 4.2));
-      },
-      signage(g) { // screen on a stand: content block with play button, text lines, progress bar
-        g.rect(0, 0, 100, 60);
-        g.fill(6, 6, 54, 34);
-        g.pen = 0;
-        for (let y = 13; y <= 33; y += 0.5) g.line(28, y, 28 + (1 - Math.abs(y - 23) / 10) * 15, y);
-        g.pen = 1;
-        g.line(66, 9, 94, 9); g.line(66, 15, 88, 15); g.line(66, 21, 92, 21); g.line(66, 27, 80, 27);
-        g.rect(66, 32, 26, 8);
-        g.line(6, 50, 94, 50); g.fill(6, 49, 38, 2);
-        g.fill(46, 60, 8, 12); g.fill(28, 72, 44, 3);
       },
       more(g) { // results: bars + trend line
         g.line(4, 0, 4, 76); g.line(4, 76, 100, 76);
@@ -1028,7 +1005,7 @@ write me and mention ERR:SOUL. i'll know.
 
   const fs = { kids: {
     services: { sel: '#web', kids: { 'web-apps': { sel: '#web' }, ai: { sel: '#ai' }, automation: { sel: '#auto' } } },
-    work: { sel: '#work', kids: { qpong: { sel: '[data-shape=coupon]' }, bronx: { sel: '[data-shape=booking]' }, play: { sel: '[data-shape=signage]' }, more: { sel: '[data-shape=more]' } } },
+    work: { sel: '#work', kids: { qpong: { sel: '[data-shape=coupon]' }, bronx: { sel: '[data-shape=booking]' }, more: { sel: '[data-shape=more]' } } },
     contact: { sel: '#contact' },
     '.secrets': {
       files: { 'manifesto.txt': { text: MANIFESTO }, 'note.txt': { text: NOTE } },
@@ -1155,7 +1132,7 @@ write me and mention ERR:SOUL. i'll know.
     sh: ([a]) => a ? run(a) : print('usage: sh <file>', 'dim'),
     bash: ([a]) => a ? run(a) : print('usage: bash <file>', 'dim'),
     services: () => { print('web apps · ai integration · automation'); go(['services']); },
-    work: () => { print('qpong.me · bronx.ee · playsignage.com'); go(['work']); },
+    work: () => { print('qpong.me · bronx.ee'); go(['work']); },
     contact: () => field('name').focus(),
     rain: () => { if (!Field) return print('ERR:NO_GPU', 'err'); print(Field.toggleStorm() ? 'precipitation: heavy' : 'precipitation: normal', 'ok'); },
     clear: () => { log.textContent = ''; },
