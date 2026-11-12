@@ -355,27 +355,28 @@
     </div>
   </section>
 
-  <section class="section" data-shape="signage">
+  <section class="section" data-shape="booking">
     <div class="copy reveal">
       <div class="label">04 / WORK · 02</div>
+      <h2>bronx</h2>
+      <p class="kicker">Booking system for beauty &amp; care businesses</p>
+      <p class="role">role · Founder / Software Engineer</p>
+      <p>A salon's own booking page: clients book themselves, any time of day, without an account or an app. Reminders, client cards and monthly stats come built in.</p>
+      <p>No commission on bookings, and it runs under the salon's own name.</p>
+      <ul class="tags"><li>online booking</li><li>reminders</li><li>client cards</li><li>statistics</li></ul>
+      <a class="visit" href="https://bronx.ee" target="_blank" rel="noopener">bronx.ee ↗</a>
+    </div>
+  </section>
+
+  <section class="section" data-shape="signage">
+    <div class="copy reveal">
+      <div class="label">04 / WORK · 03</div>
       <h2>Play</h2>
       <p class="kicker">Digital signage platform</p>
       <p class="role">role · Software Engineer</p>
       <p>Design, schedule and play menus, promotions and dashboards on screens from one place. Runs on 100+ screen types and keeps playing when the internet drops. Used by 2,500+ organizations on 25,000+ screens.</p>
       <ul class="tags"><li>screen networks</li><li>scheduling</li><li>offline playback</li></ul>
       <a class="visit" href="https://playsignage.com" target="_blank" rel="noopener">playsignage.com ↗</a>
-    </div>
-  </section>
-
-  <section class="section" data-shape="booking">
-    <div class="copy reveal">
-      <div class="label">04 / WORK · 03</div>
-      <h2>Booking Systems</h2>
-      <p class="kicker">Online booking for any service business</p>
-      <p>Clients pick a service, see the price and duration, and book a time on their own. No calls, no back-and-forth messages.</p>
-      <p>On top of that: automated reminders and follow-ups, an AI chat that answers questions and books for your clients, and ongoing maintenance so it keeps running while you focus on the work.</p>
-      <ul class="tags"><li>online booking</li><li>automation</li><li>AI chat</li><li>maintenance</li></ul>
-      <a class="visit" href="https://hilleliis.ee" target="_blank" rel="noopener">hilleliis.ee ↗</a>
     </div>
   </section>
 
@@ -1027,7 +1028,7 @@ write me and mention ERR:SOUL. i'll know.
 
   const fs = { kids: {
     services: { sel: '#web', kids: { 'web-apps': { sel: '#web' }, ai: { sel: '#ai' }, automation: { sel: '#auto' } } },
-    work: { sel: '#work', kids: { qpong: { sel: '[data-shape=coupon]' }, play: { sel: '[data-shape=signage]' }, booking: { sel: '[data-shape=booking]' }, more: { sel: '[data-shape=more]' } } },
+    work: { sel: '#work', kids: { qpong: { sel: '[data-shape=coupon]' }, bronx: { sel: '[data-shape=booking]' }, play: { sel: '[data-shape=signage]' }, more: { sel: '[data-shape=more]' } } },
     contact: { sel: '#contact' },
     '.secrets': {
       files: { 'manifesto.txt': { text: MANIFESTO }, 'note.txt': { text: NOTE } },
@@ -1154,7 +1155,7 @@ write me and mention ERR:SOUL. i'll know.
     sh: ([a]) => a ? run(a) : print('usage: sh <file>', 'dim'),
     bash: ([a]) => a ? run(a) : print('usage: bash <file>', 'dim'),
     services: () => { print('web apps · ai integration · automation'); go(['services']); },
-    work: () => { print('qpong.me · playsignage.com · hilleliis.ee'); go(['work']); },
+    work: () => { print('qpong.me · bronx.ee · playsignage.com'); go(['work']); },
     contact: () => field('name').focus(),
     rain: () => { if (!Field) return print('ERR:NO_GPU', 'err'); print(Field.toggleStorm() ? 'precipitation: heavy' : 'precipitation: normal', 'ok'); },
     clear: () => { log.textContent = ''; },
